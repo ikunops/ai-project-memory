@@ -18,14 +18,26 @@ python <skill>/scripts/sculpt.py status
 # 生成格式化提案（打印，不写入）
 python <skill>/scripts/sculpt.py propose -c 技术选型 -r "计算密集任务优先考虑 Rust" -e "用户要求低内存" -s "仅限低内存场景"
 
-# 列出全部 [待确认] 提案
+# 生成并直接写入 [待确认]（事务写入 + 重复检测，文件不存在则自动建标准结构）
+python <skill>/scripts/sculpt.py propose -c 技术选型 -r "..." -e "..." --write
+
+# 列出全部 [待确认] 提案（按类别分组，标记与 [已生效] 重复项）
 python <skill>/scripts/sculpt.py review
 
 # 审查：提升第 2 条到 [已生效]
 python <skill>/scripts/sculpt.py approve 2
 
-# 审查：否决删除第 1 条
+# 审查：否决，归档到 docs/archived-rules.md（不丢失）
 python <skill>/scripts/sculpt.py reject 1
+
+# 审查：否决并彻底删除（不归档）
+python <skill>/scripts/sculpt.py reject 1 --purge
+
+# 编辑提案：只改规则，证据/条件/类别保留原值
+python <skill>/scripts/sculpt.py amend 2 -r "新的规则内容"
+
+# 任何改写前先预览 diff（不写盘）
+python <skill>/scripts/sculpt.py approve 2 --dry-run
 
 # 以上均支持 --path <AGENTS.md 目录> 指定目标项目
 ```
@@ -120,8 +132,8 @@ python <skill>/scripts/sculpt.py propose \
 2. 逐条给出一句话摘要 + 我的建议（确认/否决/修改）
 3. 用户逐个确认后：
    - **确认** → 提升到 `[已生效]`（移动到文件上部，进入网关 Tier2 缓存锚点）
-   - **否决** → 删除该条（或归档到 `docs/archived-rules.md`）
-   - **修改** → 按用户意见改写后再放回 `[待确认]`
+   - **否决** → `reject`（自动归档到 `docs/archived-rules.md`，可反悔；`--purge` 才彻底删除）
+   - **修改** → `amend` 按用户意见改写后再放回 `[待确认]`
 4. 审查完成后汇报：确认 N 条 / 否决 M 条 / 待定 K 条
 
 ## 触发时机（自动判断，不需要用户显式要求）
@@ -138,5 +150,6 @@ python <skill>/scripts/sculpt.py propose \
 - 绝不修改 `[已生效]` 区块（人工领地），只能追加 `[待确认]`
 - 绝不记录含密钥/密码/内网地址的内容
 - 提案要精炼（每条 ≤3 行），避免 AGENTS.md 膨胀
+- 否决的提案自动归档到 `docs/archived-rules.md`（带 ID/时间戳），可追溯、可反悔
 - 若 AGENTS.md 超过约 200 行，提醒用户进行年度归档清理
 - 网关 Tier2 缓存按文件内容哈希失效：AGENTS.md 变化后，缓存会自动更新，无需额外操作
