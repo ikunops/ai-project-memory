@@ -226,11 +226,15 @@ def cmd_status(args):
     if not blocks:
         print("未发现标准区块（[已生效]/[待确认]）。建议运行: sculpt.py init")
         return
+    found = False
     for name, body in blocks:
         if not name.startswith("["):
             continue
+        found = True
         n = len(parser.iter_items(name, body))
         print(f"  {name}: {n} 条")
+    if not found:
+        print("文件存在但无 [已生效]/[待确认] 区块。可用: sculpt.py init 或 propose --write 开始沉淀")
 
 
 def cmd_propose(args):
